@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Achadinhos — ofertas garimpadas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #141318;
+    --bg-card: #1d1c23;
+    --paper: #f2ede2;
+    --ink: #f2f0ea;
+    --ink-dim: #9a97a3;
+    --red: #ff4757;
+    --yellow: #f4d35e;
+    --line: #322f3a;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Space Grotesk', sans-serif;
+    background-image:
+      radial-gradient(circle at 15% 10%, rgba(255,71,87,0.08), transparent 40%),
+      radial-gradient(circle at 85% 30%, rgba(244,211,94,0.06), transparent 40%);
+  }
+
+  header {
+    padding: 56px 24px 32px;
+    text-align: center;
+    border-bottom: 1px dashed var(--line);
+  }
+
+  .kicker {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--red);
+  }
+
+  h1 {
+    font-family: 'Anton', sans-serif;
+    font-weight: 400;
+    font-size: clamp(2.5rem, 7vw, 5rem);
+    letter-spacing: 0.01em;
+    margin: 8px 0 4px;
+    line-height: 0.95;
+  }
+
+  h1 span { color: var(--yellow); }
+
+  .sub {
+    color: var(--ink-dim);
+    font-size: 0.95rem;
+    max-width: 480px;
+    margin: 12px auto 0;
+  }
+
+  .filters {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+    padding: 24px;
+  }
+
+  .filters button {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--ink-dim);
+    padding: 8px 14px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .filters button:hover { border-color: var(--red); color: var(--ink); }
+  .filters button.active { background: var(--red); border-color: var(--red); color: #fff; }
+
+  main {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0 24px 80px;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 20px;
+  }
+
+  .card {
+    position: relative;
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.15s ease, border-color 0.15s ease;
+  }
+
+  .card:hover { transform: translateY(-3px); border-color: #46424f; }
+
+  .card a { color: inherit; text-decoration: none; display: contents; }
+
+  .stamp {
+    position: absolute;
+    top: 14px;
+    right: -34px;
+    background: var(--red);
+    color: #fff;
+    font-family: 'Anton', sans-serif;
+    font-size: 0.95rem;
+    padding: 4px 40px;
+    transform: rotate(35deg);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+    z-index: 2;
+  }
+
+  .thumb {
+    aspect-ratio: 1 / 1;
+    background: var(--paper);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  .thumb img { width: 100%; height: 100%; object-fit: contain; mix-blend-mode: multiply; }
+
+  .body { padding: 14px 16px 18px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+
+  .store-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ink-dim);
+  }
+
+  .title {
+    font-size: 0.9rem;
+    line-height: 1.35;
+    font-weight: 500;
+    flex: 1;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .prices { display: flex; align-items: baseline; gap: 8px; margin-top: 4px; }
+
+  .price-now {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 1.15rem;
+    color: var(--yellow);
+  }
+
+  .price-was {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--ink-dim);
+    text-decoration: line-through;
+  }
+
+  .empty, .loading {
+    text-align: center;
+    color: var(--ink-dim);
+    padding: 80px 20px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+  }
+
+  footer {
+    text-align: center;
+    padding: 30px;
+    color: var(--ink-dim);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    border-top: 1px dashed var(--line);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="kicker">garimpo automático · atualizado a cada hora</div>
+  <h1>ACHAD<span>INHOS</span></h1>
+  <p class="sub">Um robô caça os preços mais baixos no Mercado Livre, Amazon, Magalu, Shein e Natura — e só te mostra o que realmente vale a pena.</p>
+</header>
+
+<div class="filters" id="filters"></div>
+
+<main>
+  <div id="content" class="loading">carregando ofertas…</div>
+</main>
+
+<footer>feito com Supabase + GitHub Actions · dados atualizados automaticamente</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  // ⚠️ Preencha com a URL e a ANON key (pública, só leitura) do seu projeto Supabase.
+  const SUPABASE_URL = "https://SEU-PROJETO.supabase.co";
+  const SUPABASE_ANON_KEY = "SUA_ANON_KEY_PUBLICA";
+
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  const STORE_LABELS = {
+    mercadolivre: "Mercado Livre",
+    amazon: "Amazon",
+    magalu: "Magalu",
+    shein: "Shein",
+    natura: "Natura",
+  };
+
+  let allDeals = [];
+  let activeStore = "all";
+
+  function formatPrice(v) {
+    return `R$ ${Number(v).toFixed(2).replace(".", ",")}`;
+  }
+
+  function renderFilters(stores) {
+    const el = document.getElementById("filters");
+    const buttons = ["all", ...stores].map((s) => {
+      const label = s === "all" ? "Todas" : (STORE_LABELS[s] || s);
+      return `<button data-store="${s}" class="${s === activeStore ? "active" : ""}">${label}</button>`;
+    });
+    el.innerHTML = buttons.join("");
+    el.querySelectorAll("button").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        activeStore = btn.dataset.store;
+        renderFilters(stores);
+        renderDeals();
+      });
+    });
+  }
+
+  function renderDeals() {
+    const content = document.getElementById("content");
+    const filtered = activeStore === "all" ? allDeals : allDeals.filter((d) => d.store === activeStore);
+
+    if (filtered.length === 0) {
+      content.innerHTML = `<div class="empty">nenhum achadinho por aqui ainda — o robô ainda está garimpando.</div>`;
+      return;
+    }
+
+    content.innerHTML = `<div class="grid">${filtered.map(cardHtml).join("")}</div>`;
+  }
+
+  function cardHtml(deal) {
+    const link = deal.affiliate_url || deal.url;
+    const hasDiscount = deal.discount_pct && deal.discount_pct > 0;
+    const img = deal.image_url || "";
+
+    return `
+      <div class="card">
+        <a href="${link}" target="_blank" rel="noopener sponsored">
+          ${hasDiscount ? `<div class="stamp">-${Math.round(deal.discount_pct)}%</div>` : ""}
+          <div class="thumb">${img ? `<img src="${img}" alt="" loading="lazy" />` : ""}</div>
+          <div class="body">
+            <div class="store-tag">${STORE_LABELS[deal.store] || deal.store}</div>
+            <div class="title">${deal.title}</div>
+            <div class="prices">
+              <span class="price-now">${formatPrice(deal.price)}</span>
+              ${deal.original_price ? `<span class="price-was">${formatPrice(deal.original_price)}</span>` : ""}
+            </div>
+          </div>
+        </a>
+      </div>`;
+  }
+
+  async function loadDeals() {
+    const { data, error } = await supabase
+      .from("latest_deals")
+      .select("*")
+      .order("discount_pct", { ascending: false, nullsFirst: false })
+      .limit(60);
+
+    if (error) {
+      document.getElementById("content").innerHTML =
+        `<div class="empty">erro ao carregar ofertas: ${error.message}</div>`;
+      console.error(error);
+      return;
+    }
+
+    allDeals = data || [];
+    const stores = [...new Set(allDeals.map((d) => d.store))];
+    renderFilters(stores);
+    renderDeals();
+  }
+
+  loadDeals();
+</script>
+
+</body>
+</html>

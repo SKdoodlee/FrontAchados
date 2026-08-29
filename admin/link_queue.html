@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Admin — fila de links</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: #141318;
+    color: #f2f0ea;
+    font-family: -apple-system, system-ui, sans-serif;
+    padding: 20px;
+  }
+  h1 { font-size: 1.3rem; margin-bottom: 4px; }
+  .warn {
+    background: #3a2a1a;
+    border: 1px solid #a86a2a;
+    color: #f4d35e;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    margin-bottom: 20px;
+  }
+  .setup {
+    background: #1d1c23;
+    border: 1px solid #322f3a;
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 20px;
+  }
+  .setup input {
+    width: 100%;
+    padding: 8px 10px;
+    margin-top: 6px;
+    margin-bottom: 12px;
+    border-radius: 6px;
+    border: 1px solid #322f3a;
+    background: #0f0e12;
+    color: #fff;
+    font-family: monospace;
+    font-size: 0.85rem;
+  }
+  .setup label { font-size: 0.8rem; color: #9a97a3; }
+  button {
+    background: #ff4757;
+    color: #fff;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.85rem;
+  }
+  button:hover { opacity: 0.9; }
+  button.secondary { background: #322f3a; }
+
+  .card {
+    display: flex;
+    gap: 14px;
+    background: #1d1c23;
+    border: 1px solid #322f3a;
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 14px;
+  }
+  .card img { width: 80px; height: 80px; object-fit: contain; background: #f2ede2; border-radius: 6px; }
+  .card .info { flex: 1; min-width: 0; }
+  .card .title { font-size: 0.9rem; margin-bottom: 6px; }
+  .card .price { font-family: monospace; color: #f4d35e; font-weight: 700; margin-bottom: 10px; }
+  .card a.open-link {
+    display: inline-block;
+    font-size: 0.8rem;
+    color: #6bd0ff;
+    margin-bottom: 10px;
+  }
+  .card .row { display: flex; gap: 8px; }
+  .card input[type=text] {
+    flex: 1;
+    padding: 8px 10px;
+    border-radius: 6px;
+    border: 1px solid #322f3a;
+    background: #0f0e12;
+    color: #fff;
+    font-size: 0.85rem;
+  }
+  .empty { color: #9a97a3; text-align: center; padding: 40px; }
+  .status { font-size: 0.8rem; margin-top: 6px; }
+  .status.ok { color: #4ade80; }
+  .status.err { color: #ff4757; }
+</style>
+</head>
+<body>
+
+<h1>🔗 Fila de links de afiliado</h1>
+
+<div class="setup" id="setup">
+  <label>SUPABASE_URL</label>
+  <input type="text" id="supabaseUrl" placeholder="https://xxxxx.supabase.co" />
+  <label>SUPABASE_ANON_KEY</label>
+  <input type="text" id="supabaseKey" placeholder="chave anon (pública)" />
+  <label>Seu e-mail</label>
+  <input type="text" id="email" placeholder="voce@exemplo.com" />
+  <label>Sua senha</label>
+  <input type="password" id="password" placeholder="senha" onkeydown="if(event.key==='Enter') login()" />
+  <button onclick="login()">Entrar</button>
+  <div class="status err" id="loginStatus"></div>
+</div>
+
+<div id="content"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  let supabase = null;
+
+  // URL e ANON key são seguras de deixar fixas aqui -- não dão acesso a
+  // nada sozinhas, só identificam o projeto. O que protege de verdade é o
+  // login (email/senha) mais as policies no banco.
+  window.addEventListener("DOMContentLoaded", () => {
+    const savedUrl = localStorage.getItem("admin_supabase_url");
+    const savedKey = localStorage.getItem("admin_supabase_key");
+    if (savedUrl) document.getElementById("supabaseUrl").value = savedUrl;
+    if (savedKey) document.getElementById("supabaseKey").value = savedKey;
+  });
+
+  async function login() {
+    const url = document.getElementById("supabaseUrl").value.trim();
+    const key = document.getElementById("supabaseKey").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+    const statusEl = document.getElementById("loginStatus");
+
+    if (!url || !key || !email || !password) {
+      statusEl.textContent = "Preencha todos os campos.";
+      return;
+    }
+
+    localStorage.setItem("admin_supabase_url", url);
+    localStorage.setItem("admin_supabase_key", key);
+
+    supabase = window.supabase.createClient(url, key);
+
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      statusEl.textContent = `Erro no login: ${error.message}`;
+      return;
+    }
+
+    statusEl.textContent = "";
+    document.getElementById("setup").style.display = "none";
+    loadQueue();
+  }
+
+  function formatPrice(v) {
+    return v != null ? `R$ ${Number(v).toFixed(2).replace(".", ",")}` : "";
+  }
+
+  async function loadQueue() {
+    const content = document.getElementById("content");
+    content.innerHTML = "<p>carregando...</p>";
+
+    const { data, error } = await supabase
+      .from("admin_link_queue")
+      .select("*")
+      .order("detected_at", { ascending: false });
+
+    if (error) {
+      content.innerHTML = `<p style="color:#ff4757">Erro: ${error.message}</p>`;
+      return;
+    }
+
+    if (!data || data.length === 0) {
+      content.innerHTML = `<div class="empty">Nenhuma oferta esperando link agora 🎉</div>`;
+      return;
+    }
+
+    content.innerHTML = data.map(cardHtml).join("");
+  }
+
+  function cardHtml(item) {
+    return `
+      <div class="card" id="card-${item.queue_id}">
+        <img src="${item.image_url || ""}" alt="" />
+        <div class="info">
+          <div class="title">${item.title}</div>
+          <div class="price">
+            ${formatPrice(item.price)}
+            ${item.discount_pct ? ` · ${Math.round(item.discount_pct)}% OFF` : ""}
+          </div>
+          <a class="open-link" href="${item.url}" target="_blank">Abrir produto no Mercado Livre →</a>
+          <div class="row">
+            <input type="text" id="input-${item.product_id}" placeholder="Cole aqui o link de afiliado gerado" />
+            <button onclick="saveLink('${item.product_id}', '${item.queue_id}')">Salvar</button>
+          </div>
+          <div class="status" id="status-${item.queue_id}"></div>
+        </div>
+      </div>`;
+  }
+
+  async function saveLink(productId, queueId) {
+    const input = document.getElementById(`input-${productId}`);
+    const statusEl = document.getElementById(`status-${queueId}`);
+    const link = input.value.trim();
+
+    if (!link) {
+      statusEl.className = "status err";
+      statusEl.textContent = "Cole um link antes de salvar.";
+      return;
+    }
+
+    const { error } = await supabase
+      .from("products")
+      .update({ affiliate_url: link })
+      .eq("id", productId);
+
+    if (error) {
+      statusEl.className = "status err";
+      statusEl.textContent = `Erro ao salvar: ${error.message}`;
+      return;
+    }
+
+    statusEl.className = "status ok";
+    statusEl.textContent = "Salvo! Vai ser enviado pro Telegram na próxima rodada do bot.";
+    setTimeout(() => {
+      const card = document.getElementById(`card-${queueId}`);
+      if (card) card.remove();
+    }, 1500);
+  }
+</script>
+
+</body>
+</html>
