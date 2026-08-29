@@ -285,11 +285,34 @@
   }
 
   async function loadDeals() {
-    const { data, error } = await sb
+    let { data, error } = await sb
       .from("latest_deals")
       .select("*")
       .order("discount_pct", { ascending: false, nullsFirst: false })
       .limit(60);
+
+    // Fallback caso a view latest_deals não esteja disponível/permissiva.
+    if (error) {
+      console.warn("latest_deals falhou; tentando fallback:", error.message);
+      const fallback = await sb
+        .from("price_history")
+        .select("id, product_id, price, original_price, discount_pct, checked_at, products(store,title,url,affiliate_url,image_url,category)")
+        .order("discount_pct", { ascending: false, nullsFirst: false })
+        .limit(60);
+      if (!fallback.error) {
+        data = (fallback.data || []).map((row) => ({
+          id: row.product_id,
+          ...row.products,
+          price: row.price,
+          original_price: row.original_price,
+          discount_pct: row.discount_pct,
+          checked_at: row.checked_at,
+        }));
+        error = null;
+      } else {
+        error = fallback.error;
+      }
+    }
 
     if (error) {
       document.getElementById("content").innerHTML =
