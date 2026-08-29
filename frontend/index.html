@@ -217,7 +217,7 @@
   const SUPABASE_URL = "https://SEU-PROJETO.supabase.co";
   const SUPABASE_ANON_KEY = "SUA_ANON_KEY_PUBLICA";
 
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   const STORE_LABELS = {
     mercadolivre: "Mercado Livre",
@@ -285,7 +285,7 @@
   }
 
   async function loadDeals() {
-    const { data, error } = await supabase
+    const { data, error } = await sb
       .from("latest_deals")
       .select("*")
       .order("discount_pct", { ascending: false, nullsFirst: false })

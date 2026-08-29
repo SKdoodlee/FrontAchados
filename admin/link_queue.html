@@ -112,7 +112,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-  let supabase = null;
+  let sb = null;
 
   // URL e ANON key são seguras de deixar fixas aqui -- não dão acesso a
   // nada sozinhas, só identificam o projeto. O que protege de verdade é o
@@ -139,9 +139,9 @@
     localStorage.setItem("admin_supabase_url", url);
     localStorage.setItem("admin_supabase_key", key);
 
-    supabase = window.supabase.createClient(url, key);
+    sb = window.supabase.createClient(url, key);
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await sb.auth.signInWithPassword({ email, password });
     if (error) {
       statusEl.textContent = `Erro no login: ${error.message}`;
       return;
@@ -160,7 +160,7 @@
     const content = document.getElementById("content");
     content.innerHTML = "<p>carregando...</p>";
 
-    const { data, error } = await supabase
+    const { data, error } = await sb
       .from("admin_link_queue")
       .select("*")
       .order("detected_at", { ascending: false });
@@ -209,7 +209,7 @@
       return;
     }
 
-    const { error } = await supabase
+    const { error } = await sb
       .from("products")
       .update({ affiliate_url: link })
       .eq("id", productId);
